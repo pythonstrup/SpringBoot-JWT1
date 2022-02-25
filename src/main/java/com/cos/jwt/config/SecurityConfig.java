@@ -5,11 +5,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.context.SecurityContextPersistenceFilter;
 import org.springframework.web.filter.CorsFilter;
 
 import com.cos.jwt.config.jwt.JwtAuthenticationFilter;
-import com.cos.jwt.filter.MyFilter3;
+import com.cos.jwt.config.jwt.JwtAuthorizationFilter;
+import com.cos.jwt.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig extends WebSecurityConfigurerAdapter{
 
 	private final CorsFilter corsFilter;
+	private final UserRepository userRepository;
 	
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
@@ -30,13 +31,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 			.formLogin().disable()   // 2. 폼로그인 사용 X
 			.httpBasic().disable()    // 3. 기본적인 Http 로그인 방식 사용 X   ===> 1~3은 JWT 만들 때 고정.
 			.addFilter(new JwtAuthenticationFilter(authenticationManager())) // AuthenticationManager
+			.addFilter(new JwtAuthorizationFilter(authenticationManager(), userRepository))
 			.authorizeRequests()
 			.antMatchers("/api/v1/user/**")
-			.access("hasRole('ROLE_USER') or hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')")
+				.access("hasRole('ROLE_USER') or hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')")
 			.antMatchers("/api/v1/manager/**")
-			.access("hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')")
+				.access("hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')")
 			.antMatchers("/api/v1/admin/**")
-			.access("hasRole('ROLE_ADMIN')")
+				.access("hasRole('ROLE_ADMIN')")
 			.anyRequest().permitAll();
 	}
 }
